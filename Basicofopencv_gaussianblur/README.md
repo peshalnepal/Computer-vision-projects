@@ -7,6 +7,13 @@
 - After this, Run ***`make`*** command
 - executable name **hello** has been created 
 - To check the output, Run ***`./hello`*** command in terminal
+
+### OUTPUT:
+Image before applying Gaussian Blur :<br/>
+**[Image Before Blur](photos/imagebeforeblur.png)**<br/>
+
+Image before applying Gaussian Blur with kernal size of (5,5) and standard deviation of 5.</br>
+**[Image After  Blur](photos/imageafterblur.png)**<br/>
 ## Import images and videos
 
 ### For Images

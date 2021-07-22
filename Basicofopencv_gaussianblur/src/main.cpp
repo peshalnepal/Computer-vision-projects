@@ -6,7 +6,7 @@ using namespace std;
 using namespace cv;
 int main()
 {
-Mat img=imread("photos/checkblur.png");
+Mat img=imread("../photos/imagebeforeblur.png");
 GaussianBlur(img,img,Size(5,5),5);
 cout<<img.size<<endl;
 while(true)
@@ -15,6 +15,7 @@ while(true)
     int k =waitKey(0);
     if(k=='s')
         {
+        imwrite("../photos/imageafterblur.png",img);
         break;
         }
     }
