@@ -1,0 +1,22 @@
+# Cache file
+CMakeCache.txt
+
+# cmake_install
+*.cmake
+
+#makefile
+Makefile
+
+# cmakefiles
+CMakeFiles/
+
+#executable file
+hello
+
+#configfile
+helloConfig.h
+helloConfig.h.tmp
+ 
+# main files
+*.o
+*.exe
