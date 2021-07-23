@@ -1,0 +1,2 @@
+#define histogram_VERSION_MAJOR @histogram_VERSION_MAJOR@
+#define histogram_VERSION_MINOR @histogram_VERSION_MINOR@
