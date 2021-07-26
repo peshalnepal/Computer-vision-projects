@@ -7,6 +7,7 @@
 - After this, Run ***`make`*** command
 - executable name **histogram** has been created 
 - To check the output, Run ***`./histogram`*** command in terminal
+- To close the windows press key **'s'** from the keyboard
   
 ### OUTPUT:
 ***About Image :***<br/>
@@ -53,7 +54,19 @@ Histogram is visual representation where data collected are organised in sets of
 
   ***For example :***<br/>
 
-  `calcHist(&imgGRAY[0],1,0,Mat(),gray_hist,1,&histSize,histrange,true,false);`
+  `calcHist(&imRGB[0],1,0,Mat(),blue_hist,1,&histSize,histrange,true,false);`
+  
+  Here in this example, we are passing imgRGB as inputarray source. These are `Mat` Vector which store color channels after they are splitted from the original image. Out of three channel we are passing 1st channel i.e. blue channel as our input.We are passsing single image channel of an image as input, soo value in `int nimages` will be **1** and `const int* channels` will be **0** as matrix that we have passed only consist of one dimension. We are not using any mask so we have passed empty matrix function i.e. `Mat()` . Output is store in `blue_hist`. 
 
+  Obtained Mat image i.e. `blue_hist` is at first normalized as large no of pixels may have similar pixel value and ploted in another Image create using `Mat()`<br/>
+  **following are the syntax used to do the task :**<br/>
+  `int width=512;`<br/>
+  `int height=428;`<br/>
+  `int container=cvRound(width/histSize);`<br/>
+  `Mat histrgbimage(height,width,CV_8UC3,Scalar(255,255,255));`<br/>
+  `normalize(blue_hist, blue_hist, 0, histgrayimage.rows, NORM_MINMAX, -1, Mat() );`<br/>
+  
+  `width` and `height` determine width and height of an image in which histogram is plotted. `container` define size of bin in which pixel whose value resemble with value inside bin are stored.<br/>
+  `normalize` function in used for normalizing histogram as the value in histogram can vary a lot and can be really high which will be impossible to fit inside an image of smaller size so histgram is normalize between 0 and height of the image in which we show the histogram.
 
-  Obtained Mat image i.e. `gray_hist` is at first normalized as large no of pixels may have similar pixel value and ploted in another Image create using `Mat()`
+  

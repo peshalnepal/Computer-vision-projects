@@ -30,11 +30,16 @@ calcHist(&imgGRAY[0],1,0,Mat(),gray_hist,1,&histSize,histrange,true,false);
 calcHist(&imRGB[0],1,0,Mat(),blue_hist,1,&histSize,histrange,true,false);
 calcHist(&imRGB[1],1,0,Mat(),green_hist,1,&histSize,histrange,true,false);
 calcHist(&imRGB[2],1,0,Mat(),red_hist,1,&histSize,histrange,true,false);
+//width and height of image in which we are plotting the histogram
 int width=512;
 int height=428;
+//size of bin, efine width of bin
 int container=cvRound(width/histSize);
+// Maat of given width and height is created of 3 channels and pixel depth of 8bit
+// initially 255 is assign to every pixels of created matrix
 Mat histgrayimage(height,width,CV_8UC3,Scalar(255,255,255));
 Mat histrgbimage(height,width,CV_8UC3,Scalar(255,255,255));
+//this fucntion is responsible for printing the max no of pixel in particular pixel value
 printpixelsvalue(gray_hist,256,"gray");
 printpixelsvalue(blue_hist,256,"blue");
 printpixelsvalue(green_hist,256,"green");
@@ -44,6 +49,7 @@ normalize(gray_hist, gray_hist, 0, histgrayimage.rows, NORM_MINMAX, -1, Mat() );
 normalize(blue_hist, blue_hist, 0, histgrayimage.rows, NORM_MINMAX, -1, Mat() );
 normalize(green_hist, green_hist, 0, histgrayimage.rows, NORM_MINMAX, -1, Mat() );
 normalize(red_hist, red_hist, 0, histgrayimage.rows, NORM_MINMAX, -1, Mat() );
+// creating histogram in the given image
 for (int i=1;i<histSize;i++ )
 {
 line(histgrayimage,Point(container*(i-1),height-cvRound(gray_hist.at<float>(i-1))),Point(container*(i),height-cvRound(gray_hist.at<float>(i))),Scalar(0,0,0),1,LINE_AA);
