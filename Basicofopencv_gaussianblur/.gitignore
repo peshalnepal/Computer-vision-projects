@@ -12,6 +12,7 @@ CMakeFiles/
 
 #executable file
 hello
+main
 
 #configfile
 helloConfig.h

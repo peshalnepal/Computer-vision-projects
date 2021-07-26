@@ -7,6 +7,7 @@
 - After this, Run ***`make`*** command
 - executable name **hello** has been created 
 - To check the output, Run ***`./hello`*** command in terminal
+- To terminate the window press **'s'** key from the keyboard
 
 ### OUTPUT:
 Image before applying Gaussian Blur :<br/>

@@ -6,16 +6,18 @@ using namespace std;
 using namespace cv;
 int main()
 {
-Mat img=imread("../photos/imagebeforeblur.png");
-GaussianBlur(img,img,Size(5,5),5);
-cout<<img.size<<endl;
+Mat originalimg=imread("photos/imagebeforeblur.png");
+Mat blurimg;
+GaussianBlur(originalimg,blurimg,Size(5,5),5);
+cout<<originalimg.size<<endl;
 while(true)
     {
-    imshow("Display window",img);
+    imshow("Original Image",originalimg);
+    imshow("Blur Image",blurimg);
     int k =waitKey(0);
     if(k=='s')
         {
-        imwrite("../photos/imageafterblur.png",img);
+        imwrite("../photos/imageafterblur.png",blurimg);
         break;
         }
     }
