@@ -1,0 +1,5 @@
+# ignore notebook file
+.ipynb
+
+# ignore folder
+.ipynb_checkpoints/  
