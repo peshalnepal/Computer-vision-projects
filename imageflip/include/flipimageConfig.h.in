@@ -1,0 +1,2 @@
+#define flipimage_VERSION_MAJOR @flipimage_VERSION_MAJOR@
+#define flipimage_VERSION_MINOR @flipimage_VERSION_MINOR@
