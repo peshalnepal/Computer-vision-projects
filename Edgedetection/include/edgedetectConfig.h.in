@@ -1,0 +1,2 @@
+#define edgedetect_VERSION_MAJOR @edgedetect_VERSION_MAJOR@
+#define edgedetect_VERSION_MINOR @edgedetect_VERSION_MINOR@
