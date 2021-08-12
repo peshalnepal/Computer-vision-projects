@@ -1,0 +1,2 @@
+#define linedetect_VERSION_MAJOR @linedetect_VERSION_MAJOR@
+#define linedetect_VERSION_MINOR @linedetect_VERSION_MINOR@
