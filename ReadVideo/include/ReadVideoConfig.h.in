@@ -1,0 +1,2 @@
+#define ReadVideo_VERSION_MAJOR @ReadVideo_VERSION_MAJOR@
+#define ReadVideo_VERSION_MINOR @ReadVideo_VERSION_MINOR@
