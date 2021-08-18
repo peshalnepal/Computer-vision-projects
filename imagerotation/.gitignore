@@ -1,0 +1,19 @@
+# Cache file
+CMakeCache.txt
+
+# cmake_install
+*.cmake
+
+#makefile
+Makefile
+
+# cmakefiles
+CMakeFiles/
+
+#executable file
+imagerotation
+main
+ 
+# main files
+*.o
+*.exe
