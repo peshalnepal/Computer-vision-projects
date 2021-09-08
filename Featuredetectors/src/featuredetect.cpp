@@ -16,85 +16,182 @@ Mat FeatrueDetect::createMat3Drix(Mat imagearray[3], int x, int y)
   }
   return Mat3D;
 }
-vector<KeyPoint> FeatrueDetect::sortkeypoints(vector<KeyPoint> keypointvect)
+
+vector<KeyPoint> FeatrueDetect::removekeypoints(vector<KeyPoint> keypointvect)
 {
   vector<KeyPoint> newvectorkeypoint;
   if (keypointvect.size() <= 2)
   {
     return keypointvect;
   }
-  for (int j = 0; j < keypointvect.size(); j++)
+  for (int j = 0; j < (keypointvect.size() - 1); j++)
   {
     KeyPoint newkeypoint;
-    for (int i = (j + 1); i < (keypointvect.size()); i++)
+    if (keypointvect.at(j).pt != keypointvect.at(j + 1).pt && keypointvect.at(j).angle != keypointvect.at(j + 1).angle && keypointvect.at(j).response != keypointvect.at(j + 1).response)
     {
-      if (keypointvect.at(j).pt.x != keypointvect.at(i).pt.x || keypointvect.at(j).pt.y != keypointvect.at(i).pt.y)
-      {
-        newvectorkeypoint.push_back(keypointvect.at(j));
-      }
-      else
-      {
-        keypointvect.erase(keypointvect.begin() + i);
-        i--;
-        if (i < 0)
-        {
-          i = 0;
-        }
-      }
+      newvectorkeypoint.push_back(keypointvect.at(j));
     }
   }
   return newvectorkeypoint;
 }
-vector<float> FeatrueDetect::descripter(Mat image_, int x, int y)
-{
-  float pi = 2 * acos(0);
-  vector<float> container;
-  float variab[128] = {0};
-  resize(image_, image_, Size(128, 128), INTER_AREA);
-  copyMakeBorder(image_, image_, 9, 9, 9, 9, BORDER_REPLICATE);
-  int i = 0;
-  for (int a = -8; a < 8; a + 4)
-  {
-    for (int b = -8; b < 8; b + 4)
-    {
 
-      for (int c = 0; c < 4; c++)
+/** 
+ * This is function which create descriptor for each keypoint . 
+ * The descriptor does not depend upon scale and orientation and thats need to be take into consideration.
+ */
+Mat FeatrueDetect::create_descripter(vector<KeyPoint> keypoints_, vector<vector<Mat>> imagevec)
+{
+  Mat finaloutput = Mat::zeros(Size(128, keypoints_.size()), CV_32F);
+  vector<float> row_bin_list, col_bin_list, magnitude_list, orientation_bin_list;
+  int window_width = 4;
+  int scale_weighter = 3;
+  cout << " imageevec" << imagevec.size() << endl;
+  for (int kv = 0; kv < int(keypoints_.size()); kv++)
+  {
+    row_bin_list.clear();
+    col_bin_list.clear();
+    magnitude_list.clear();
+    orientation_bin_list.clear();
+    float pi = 2 * acos(0);
+    int octave = ((keypoints_.at(kv)).octave) & 255;
+    int layer = ((keypoints_.at(kv)).octave >> 8) & 255;
+    float scale = 1 / pow(2, octave);
+    Mat image = (imagevec.at(octave)).at(layer);
+    int image_width = image.cols;
+    int image_height = image.rows;
+    resize(image, image, Size(int(image_width / 2), int(image_height / 2)), 0, 0, INTER_NEAREST);
+    image_width = image.cols;
+    image_height = image.rows;
+    float hist_width = scale_weighter * 0.5 * scale * (keypoints_.at(kv)).size;
+    int half_width = int(round(hist_width * sqrt(2) * (window_width + 1) * 0.5));
+    int imagediagonal = int(sqrt(pow(image_width, 2) + pow(image_height, 2)));
+    if (half_width >= imagediagonal)
+    {
+      half_width = imagediagonal;
+    }
+    int nbins = 8;
+    float angle = (keypoints_.at(kv)).angle;
+    float cos_value = cos(angle * pi / 180);
+    float sin_value = sin(angle * pi / 180);
+    float weight_multiplier = -0.5 / (pow((0.5 * window_width), 2));
+    Point key_points = Point(int((keypoints_.at(kv)).pt.x * scale), int((keypoints_.at(kv)).pt.y * scale));
+    int dims[] = {nbins, window_width + 2, window_width + 2};
+    Mat histogram_(3, dims, CV_32F, Scalar::all(0));
+    for (int i = -half_width; i <= half_width; i++)
+    {
+      for (int j = -half_width; j <= half_width; j++)
       {
-        for (int d = 0; d < 4; b)
+        float col_rot = cos_value * j - sin_value * i;
+        float row_rot = sin_value * j + cos_value * i;
+        float row_bin = (row_rot / hist_width) + 0.5 * window_width - 0.5;
+        float col_bin = (col_rot / hist_width) + 0.5 * window_width - 0.5;
+        if (row_bin > -1 && row_bin < window_width && col_bin > -1 && col_bin < window_width)
         {
-          int x_axis = x + b + d;
-          int y_axis = y + a + c;
-          float Gx = image_.at<float>(y_axis, x_axis + 1) - image_.at<float>(y_axis, x_axis - 1);
-          float Gy = image_.at<float>(y_axis + 1, x_axis) - image_.at<float>(y_axis - 1, x_axis);
-          float Gvalue = sqrt(pow(Gx, 2) + pow(Gy, 2));
-          float angle = atan2(Gy, Gx) * 180 / pi;
-          if (angle < 0)
+          int window_row = int(round(key_points.y + i));
+          int window_col = int(round(key_points.x + j));
+          if (window_row > 0 && window_row < (image_height - 1) && window_col > 0 && window_col < (image_width - 1))
           {
-            angle = 360 + angle;
+            float Gx = (image.at<float>(window_row, window_col + 1) - image.at<float>(window_row, window_col - 1));
+            float Gy = (image.at<float>(window_row + 1, window_col) - image.at<float>(window_row - 1, window_col));
+            float Gvalue = sqrt(Gx * Gx + Gy * Gy);
+            float Gangle;
+            if ((atan2(Gy, Gx) * 180 / pi) < 0)
+            {
+              Gangle = (atan2(Gy, Gx) * 180 / pi) + 360 * floor(abs(atan2(Gy, Gx) * 180 / pi) / 360);
+            }
+            else
+            {
+              Gangle = (atan2(Gy, Gx) * 180 / pi) - 360 * floor((atan2(Gy, Gx) * 180 / pi) / 360);
+            }
+            if (Gangle < 0)
+            {
+              Gangle += 360;
+            }
+            float weight = exp(weight_multiplier * (pow((row_rot / hist_width), 2) + pow((col_rot / hist_width), 2)));
+            row_bin_list.push_back(row_bin);
+            col_bin_list.push_back(col_bin);
+            magnitude_list.push_back((weight * Gvalue));
+            orientation_bin_list.push_back(((Gangle - angle) * nbins / 360));
           }
-          variab[i * 8 + (int)angle / 45] += Gvalue;
         }
       }
-      i++;
-      // container.push_back(variab);
+    }
+    for (int k = 0; k < magnitude_list.size(); k++)
+    {
+      int rows_bin_floor = floor(row_bin_list.at(k));
+      int columns_bin_floor = floor(col_bin_list.at(k));
+      int orientation_bin_floor = floor(orientation_bin_list.at(k));
+      float magnitude_value = magnitude_list.at(k);
+      if (orientation_bin_floor < 0)
+      {
+        orientation_bin_floor += nbins;
+      }
+      if (orientation_bin_floor >= nbins)
+      {
+        orientation_bin_floor -= nbins;
+      }
+      
+      
+      //Smoothing via trilinear interpolation
+      //Notations follows https://en.wikipedia.org/wiki/Trilinear_interpolation
+      // Note that we are really doing the inverse of trilinear interpolation here (we take the center value of the cube and distribute it among its eight neighbors)
+      
+      
+      if (rows_bin_floor < 4 && columns_bin_floor < 4 && (orientation_bin_floor >= 0 && orientation_bin_floor < nbins))
+      {
+        float c1 = magnitude_value * (row_bin_list.at(k) - rows_bin_floor);
+        float c0 = magnitude_value * (1 - (row_bin_list.at(k) - rows_bin_floor));
+        float c11 = c1 * (col_bin_list.at(k) - columns_bin_floor);
+        float c10 = c1 * (1 - (col_bin_list.at(k) - columns_bin_floor));
+        float c01 = c0 * (col_bin_list.at(k) - columns_bin_floor);
+        float c00 = c0 * (1 - (col_bin_list.at(k) - columns_bin_floor));
+        float c111 = c11 * (orientation_bin_list.at(k) - orientation_bin_floor);
+        float c110 = c11 * (1 - (orientation_bin_list.at(k) - orientation_bin_floor));
+        float c101 = c10 * (orientation_bin_list.at(k) - orientation_bin_floor);
+        float c100 = c10 * (1 - (orientation_bin_list.at(k) - orientation_bin_floor));
+        float c011 = c01 * (orientation_bin_list.at(k) - orientation_bin_floor);
+        float c010 = c01 * (1 - (orientation_bin_list.at(k) - orientation_bin_floor));
+        float c001 = c00 * (orientation_bin_list.at(k) - orientation_bin_floor);
+        float c000 = c00 * (1 - (orientation_bin_list.at(k) - orientation_bin_floor));
+        histogram_.at<float>(orientation_bin_floor, rows_bin_floor + 1, columns_bin_floor + 1) += c000;
+        histogram_.at<float>(((orientation_bin_floor + 1) % nbins), rows_bin_floor + 1, columns_bin_floor + 1) += c001;
+        histogram_.at<float>(orientation_bin_floor, rows_bin_floor + 1, columns_bin_floor + 2) += c010;
+        histogram_.at<float>(((orientation_bin_floor + 1) % nbins), rows_bin_floor + 1, columns_bin_floor + 2) += c011;
+        histogram_.at<float>(orientation_bin_floor, rows_bin_floor + 2, columns_bin_floor + 1) += c100;
+        histogram_.at<float>(((orientation_bin_floor + 1) % nbins), rows_bin_floor + 2, columns_bin_floor + 1) += c101;
+        histogram_.at<float>(orientation_bin_floor, rows_bin_floor + 2, columns_bin_floor + 2) += c110;
+        histogram_.at<float>(((orientation_bin_floor + 1) % nbins), rows_bin_floor + 2, columns_bin_floor + 2) += c111;
+      }
+    }
+    float normalized_value = norm(histogram_);
+    float threshold_value = normalized_value * 0.2;
+    int finalshape = window_width * window_width * nbins;
+    for (int checkint1 = 1; checkint1 <= (window_width); checkint1++)
+    {
+      for (int checkint2 = 1; checkint2 <= (window_width); checkint2++)
+      {
+        for (int checkint = 0; checkint < nbins; checkint++)
+        {
+          finaloutput.at<float>(kv, (checkint + nbins * (checkint2 - 1) + nbins * window_width * (checkint1 - 1))) = histogram_.at<float>(checkint, checkint1, checkint2);
+          if (finaloutput.at<float>(kv, (checkint + nbins * (checkint2 - 1) + nbins * window_width * (checkint1 - 1))) > threshold_value)
+          {
+            finaloutput.at<float>(kv, (checkint + nbins * (checkint2 - 1) + nbins * window_width * (checkint1 - 1))) = threshold_value;
+          }
+        }
+      }
     }
   }
-  for (int j = 0; j < 4; j++)
-  {
-    float sum = 0;
-    for (int k = 0; k < 32; k++)
-    {
-      sum += pow(variab[32 * j + k], 2);
-    }
-    for (int l = 0; l < 32; l++)
-    {
-      variab[32 * j + l] = variab[32 * j + l] / sum;
-    }
-  }
-
-  container.assign(begin(variab), end(variab));
-  return container;
+  finaloutput /= max(norm(finaloutput), 0.00001);
+  finaloutput = (512 * finaloutput);
+  threshold(-finaloutput, finaloutput, 0, 0, THRESH_TRUNC);
+  finaloutput = -finaloutput;
+  threshold(finaloutput, finaloutput, 255, 255, THRESH_TRUNC);
+  return finaloutput;
 }
+
+/**
+ * This function generate sigma value for Gaussian blur for images in each octave.
+ */ 
 vector<float> FeatrueDetect::calculatesigmavalue(float sigma, int number_of_intervals)
 {
   vector<float> calculatedsigma;
@@ -106,11 +203,17 @@ vector<float> FeatrueDetect::calculatesigmavalue(float sigma, int number_of_inte
     float sigma_previous = pow(k, (i - 1)) * sigma;
     float sigma_total = k * sigma_previous;
     float sigma_value = sqrt(pow(sigma_total, 2) - pow(sigma_previous, 2));
-    cout << sigma_value << endl;
     calculatedsigma.push_back(sigma_value);
   }
   return calculatedsigma;
 }
+
+
+/**
+ * This function generate image pyramid based  on supplied octave value , 
+ * initial sigma value for each octave and number of intervals in each octave.
+ */ 
+
 vector<vector<Mat>> FeatrueDetect::createblurimage(Mat image, float sigma, int num_intervals, int octave)
 {
   int width_, height_;
@@ -135,30 +238,19 @@ vector<vector<Mat>> FeatrueDetect::createblurimage(Mat image, float sigma, int n
   }
   return imagevec;
 }
-vector<KeyPoint> FeatrueDetect::featuresdetect(Mat image)
+
+/**
+ * This function subtact images of different scales and generate Difference of Gaussian. 
+  */ 
+
+vector<vector<Mat>> FeatrueDetect::DifferenceofGaussianimg(vector<vector<Mat>> blurredimage)
 {
-  float pi = 2 * acos(0);
-  vector<vector<Mat>> imagevec;
-  vector<vector<Mat>> imagevec_cpy;
   vector<Mat> Group_of_images;
   vector<Mat> Group_of_diff_images;
-  vector<vector<Mat>> DoGs;
-  vector<Mat> Image_orientntation;
-  vector<KeyPoint> keypoints_orientation;
-  Mat image1, image2, image3;
-  image.convertTo(image, CV_32F);
-  float sigma = 2.5;
-  int num_intervals = 2;
-  resize(image, image, Size(0, 0), 2, 2, INTER_LINEAR);
-  GaussianBlur(image, image, Size(0, 0), 0.56);
-  bool greater_ = true;
-  bool smaller_ = false;
-  imagevec = createblurimage(image, sigma, num_intervals, 3);
-  char imgnumber[1] = {'a'};
-  char name_[100];
-  for (int octave_ = 0; octave_ < imagevec.size(); octave_++)
+  vector<vector<Mat>> DOGimages;
+  for (int octave_ = 0; octave_ < blurredimage.size(); octave_++)
   {
-    Group_of_images = imagevec.at(octave_);
+    Group_of_images = blurredimage.at(octave_);
 
     for (int size_ = 0; size_ < (Group_of_images.size() - 1); size_++)
     {
@@ -168,29 +260,139 @@ vector<KeyPoint> FeatrueDetect::featuresdetect(Mat image)
       imagecheck1.convertTo(imagecheck1, CV_32F);
       imagecheck2.convertTo(imagecheck2, CV_32F);
       diffimg = (-imagecheck1 + imagecheck2);
-      // strcpy(name_, "window");
-      // strcat(name_, imgnumber);
-      // // Mat demonstraion;
-      // // normalize(diffimg.clone(),demonstraion,0,255,NORM_MINMAX);
-      // imshow(name_, diffimg.clone());
-      // imgnumber[0] = imgnumber[0] + 1;
       Group_of_diff_images.push_back(diffimg.clone());
     }
-    DoGs.push_back(Group_of_diff_images);
+    DOGimages.push_back(Group_of_diff_images);
     Group_of_images.clear();
     Group_of_diff_images.clear();
   }
+  return DOGimages;
+}
 
+
+/** This function takes keypoints and image pyramid containind image blurred in different scale 
+ * and find orientation for each keypoint
+*/
+vector<KeyPoint> FeatrueDetect::calculateorientation(vector<KeyPoint> keypoints, vector<vector<Mat>> imagevec_cpy)
+{
+  float pi = 2 * acos(0);
+  vector<KeyPoint> keypoints_orientation;
+  for (int i = 0; i < keypoints.size(); i++)
+  {
+    KeyPoint keypoint = keypoints.at(i);
+    float octave_ = keypoint.octave & 255;
+    float layer = (keypoint.octave >> 8) & 255;
+    int xx_axis = keypoint.pt.x;
+    int yy_axis = keypoint.pt.y;
+    float scale = 1.5;
+    float radius_factor = 3;
+    int nbins = 36;
+    Mat histogramcontainer = Mat::zeros(Size(nbins, 1), CV_32F);
+    Mat smoothhistogram = Mat::zeros(Size(nbins, 1), CV_32F);
+    float circularwindowsigma = scale * keypoint.size / pow(2, octave_ + 1);
+    int radius = int(round(radius_factor * circularwindowsigma));
+    float weight_factor = -0.5 / pow(circularwindowsigma, 2);
+    float weight;
+    Mat checkimageoreint = imagevec_cpy.at(octave_).at(layer);
+    checkimageoreint.convertTo(checkimageoreint, CV_32F);
+    for (int p = -radius; p < radius + 1; p++)
+    {
+      float region_y = yy_axis + p;
+      if (region_y > 0 && region_y < checkimageoreint.rows - 1)
+      {
+        for (int q = -radius; q < radius + 1; q++)
+        {
+          float region_x = xx_axis + q;
+          if (region_x > 0 && region_x < checkimageoreint.cols - 1)
+          {
+
+            float Gx = (checkimageoreint.at<float>(region_y, region_x + 1) - checkimageoreint.at<float>(region_y, region_x - 1));
+            float Gy = (checkimageoreint.at<float>(region_y - 1, region_x) - checkimageoreint.at<float>(region_y + 1, region_x));
+            float Gvalue = sqrt(pow(Gx, 2) + pow(Gy, 2));
+            float angle;
+            if ((atan2(Gy, Gx) * 180 / pi) < 0)
+            {
+              angle = (atan2(Gy, Gx) * 180 / pi) + 360 * floor(abs(atan2(Gy, Gx) * 180 / pi) / 360);
+            }
+            else
+            {
+              angle = (atan2(Gy, Gx) * 180 / pi) - 360 * floor((atan2(Gy, Gx) * 180 / pi) / 360);
+            }
+            if (angle < 0)
+            {
+              angle = 360 + angle;
+            }
+            weight = exp(weight_factor * (p * p + q * q));
+            histogramcontainer.at<float>(0, (int)(round(angle / 10))) = histogramcontainer.at<float>(0, (int)(round(angle / 10))) + weight * Gvalue;
+          }
+        }
+      }
+    }
+
+    for (int scontainer = 0; scontainer < nbins; scontainer++)
+    {
+      int minvalu1 = (scontainer - 1) < 0 ? (nbins + (scontainer - 1)) : (scontainer - 1);
+      int minvalu2 = (scontainer - 2) < 0 ? (nbins + (scontainer - 2)) : (scontainer - 2);
+      smoothhistogram.at<float>(0, scontainer) = (6 * histogramcontainer.at<float>(0, scontainer) + 4 * (histogramcontainer.at<float>(0, minvalu1) + histogramcontainer.at<float>(0, (scontainer + 1) % nbins)) + histogramcontainer.at<float>(0, minvalu2) + histogramcontainer.at<float>(0, (scontainer + 2) % nbins)) / 16;
+    }
+    Point Maxvalue;
+    Point Minvalue;
+    double min_, max_;
+    minMaxLoc(smoothhistogram, &min_, &max_, &Minvalue, &Maxvalue);
+    float peak_ratio = 0.8;
+    for (int scontainer = 0; scontainer < nbins; scontainer++)
+    {
+      int minvalue = (scontainer - 1) < 0 ? (nbins + (scontainer - 1)) : (scontainer - 1);
+      if (smoothhistogram.at<float>(0, scontainer) >= (peak_ratio * max_))
+      {
+        // Quadratic peak interpolation
+        // The interpolation update is given by equation (6.30) in https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
+        float left_value = smoothhistogram.at<float>(0, minvalue);
+        float right_value = histogramcontainer.at<float>(0, (scontainer + 1) % nbins);
+        int interpolated_peak_index = int((scontainer) + 0.5 * (left_value - right_value) / (left_value - 2 * smoothhistogram.at<float>(0, scontainer) + right_value)) % nbins;
+        float orientation = (interpolated_peak_index)*360. / nbins;
+        if (abs(orientation) < 0.0001)
+        {
+          orientation = 0;
+        }
+        KeyPoint newkeypoint;
+        keypoint.pt = Point(int(xx_axis * 0.5 * pow(2, octave_)), int(yy_axis * 0.5 * pow(2, octave_)));
+        keypoint.size *= 0.5;
+        newkeypoint = KeyPoint(keypoint.pt, keypoint.size, (360 - orientation), keypoint.response, keypoint.octave, keypoint.class_id);
+        keypoints_orientation.push_back(newkeypoint);
+      }
+    }
+  }
+  return keypoints_orientation;
+}
+
+/** This function Read Image and determine the keypoints and passes the determine keypoint to other 
+ * function to determine orientation of keypoint and obtain the descriptor
+*/
+tuple<vector<KeyPoint>, Mat> FeatrueDetect::featuresdetect(Mat image)
+{
+  vector<Mat> final_descriptor;
+  float pi = 2 * acos(0);
+  vector<vector<Mat>> imagevec;
+  vector<vector<Mat>> imagevec_cpy;
+  vector<Mat> Group_of_images;
+  vector<vector<Mat>> DoGs;
+  vector<Mat> Image_orientntation;
+  vector<KeyPoint> keypoints_orientation;
+  image.convertTo(image, CV_32F);
+  float sigma = 2.5;
+  int num_intervals = 3;
+  resize(image, image, Size(0, 0), 2, 2, INTER_LINEAR);
+  imagevec = createblurimage(image, sigma, num_intervals, 3);
+  DoGs = DifferenceofGaussianimg(imagevec);
   int octave_ = 0;
   for (octave_ = 0; octave_ < DoGs.size(); octave_++)
   {
     Group_of_images = DoGs.at(octave_);
     Image_orientntation = imagevec.at(octave_);
-    int i = 1;
-    vector<vector<float>> descriptor_values;
-    while (i < (Group_of_images.size() - 1))
+
+    for (int i = 1; i < (Group_of_images.size() - 1); i++)
     {
-      cout << "octave" << octave_ << "image_size" << i << endl;
       Mat outputimage;
       for (int a = 2; a < ((Group_of_images.at(i)).rows - 2); a++)
       {
@@ -283,81 +485,11 @@ vector<KeyPoint> FeatrueDetect::featuresdetect(Mat image)
                   if (beta > 0 && (alpha * eigenratio) < (beta * pow((eigenratio + 1), 2)))
                   {
                     KeyPoint keypoint = KeyPoint();
-                    keypoint.pt = Point(xx_axis * pow(2, octave_), yy_axis * pow(2, octave_));
-                    keypoint.octave = octave_ + value * pow(2, 8) + int(round(((value - i) + 0.5) * 255)) * pow(2, 16);
-                    keypoint.size = sigma * pow(2, value / num_intervals) * pow(2, octave_ + 1);
+                    keypoint.pt = Point(xx_axis, yy_axis);
+                    keypoint.octave = octave_ + value * pow(2, 8) + int(round(((h.at<float>(2, 0)) + 0.5) * 255)) * pow(2, 16);
+                    keypoint.size = sigma * pow(2, (value + h.at<float>(2, 0)) / num_intervals) * pow(2, octave_ + 1);
                     keypoint.response = abs(D_);
-                    float scale = 1.5;
-                    float radius_factor = 3;
-                    int nbins = 36;
-                    Mat histogramcontainer = Mat::zeros(Size(nbins, 1), CV_32F);
-                    Mat smoothhistogram = Mat::zeros(Size(nbins, 1), CV_32F);
-                    float circularwindowsigma = scale * keypoint.size / pow(2, octave_ + 1);
-                    // int radius = int(round(radius_factor * circularwindowsigma));
-                    int radius = 7;
-                    float weight_factor = -0.5 / pow(circularwindowsigma, 2);
-                    float weight;
-                    Mat checkimageoreint = Image_orientntation.at(i).clone();
-                    // cout << radius << endl;
-                    for (int p = -radius; p < radius + 1; p++)
-                    {
-
-                      float region_y = yy_axis + p;
-                      if (region_y > 0 && region_y < checkimageoreint.rows - 1)
-                      {
-                        for (int q = -radius; q < radius + 1; q++)
-                        {
-                          float region_x = xx_axis + q;
-                          if (region_x > 0 && region_x < checkimageoreint.cols - 1)
-                          {
-                            // cout << "region_x " << region_x << "  ,region_y  " << region_y << endl;
-                            float Gx = (checkimageoreint.clone().at<uchar>(region_y, region_x + 1) - checkimageoreint.clone().at<uchar>(region_y, region_x - 1)) / 255;
-                            float Gy = (checkimageoreint.clone().at<uchar>(region_y + 1, region_x) - checkimageoreint.clone().at<uchar>(region_y - 1, region_x)) / 255;
-                            float Gvalue = sqrt(pow(Gx, 2) + pow(Gy, 2));
-                            float angle = atan2(Gy, Gx) * 180 / pi;
-                            if (angle < 0)
-                            {
-                              angle = 360 + angle;
-                            }
-                            weight = exp(weight_factor * (p * p + q * q));
-                            histogramcontainer.at<float>(0, (int)(angle / 10)) = histogramcontainer.at<float>(0, (int)(angle / 10)) + weight * Gvalue;
-                          }
-                        }
-                      }
-                    }
-
-                    for (int scontainer = 0; scontainer < nbins; scontainer++)
-                    {
-                      int minvalu1 = (scontainer - 1) < 0 ? (nbins + (scontainer - 1)) : (scontainer - 1);
-                      int minvalu2 = (scontainer - 2) < 0 ? (nbins + (scontainer - 2)) : (scontainer - 2);
-                      smoothhistogram.at<float>(0, scontainer) = (6 * histogramcontainer.at<float>(0, scontainer) + 4 * (histogramcontainer.at<float>(0, minvalu1) + histogramcontainer.at<float>(0, (scontainer + 1) % nbins)) + histogramcontainer.at<float>(0, minvalu2) + histogramcontainer.at<float>(0, (scontainer + 2) % nbins)) / 16;
-                    }
-                    Point Maxvalue;
-                    Point Minvalue;
-                    double min_, max_;
-                    minMaxLoc(smoothhistogram, &min_, &max_, &Minvalue, &Maxvalue);
-                    float peak_ratio = 0;
-                    keypoint.pt = Point(int(xx_axis * 0.5 * pow(2, octave_)), int(yy_axis * 0.5 * pow(2, octave_)));
-                    keypoint.size *= 0.5;
-                    keypoint.octave = (keypoint.octave & ~255) | ((keypoint.octave - 1) & 255);
-
-                    for (int scontainer = 0; scontainer < nbins; scontainer++)
-                    {
-                      int minvalue = (scontainer - 1) < 0 ? (nbins + (scontainer - 1)) : (scontainer - 1);
-                      if (smoothhistogram.at<float>(0, scontainer) >= (peak_ratio * max_))
-                      {
-                        float left_value = smoothhistogram.at<float>(0, minvalue);
-                        float right_value = histogramcontainer.at<float>(0, (scontainer + 1) % nbins);
-                        int interpolated_peak_index = int((scontainer) + 0.5 * (left_value - right_value) / (left_value - 2 * smoothhistogram.at<float>(0, scontainer) + right_value)) % nbins;
-                        float orientation = 360 - (interpolated_peak_index)*360. / nbins;
-                        if (abs(orientation - 360.) < 0.0001)
-                        {
-                          orientation = 0;
-                        }
-                        KeyPoint newkeypoint = KeyPoint(keypoint.pt, keypoint.size, orientation, keypoint.response, keypoint.octave, keypoint.class_id);
-                        keypoints_orientation.push_back(newkeypoint);
-                      }
-                    }
+                    keypoints_orientation.push_back(keypoint);
                   }
                 }
               }
@@ -365,10 +497,13 @@ vector<KeyPoint> FeatrueDetect::featuresdetect(Mat image)
           }
         }
       }
-      i++;
     }
-    Image_orientntation.clear();
     Group_of_images.clear();
   }
-  return sortkeypoints(keypoints_orientation);
+  keypoints_orientation = calculateorientation(keypoints_orientation, imagevec);
+  sort(keypoints_orientation.begin(), keypoints_orientation.end(), sortkeypoint);
+  vector<KeyPoint> newkeypoints;
+  newkeypoints = removekeypoints(keypoints_orientation);
+  Mat describe = create_descripter(newkeypoints, imagevec);
+  return make_tuple(newkeypoints, describe);
 }
