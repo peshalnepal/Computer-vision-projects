@@ -5,17 +5,20 @@
 #include <opencv2/xfeatures2d.hpp>
 #include <cmath>
 #include "include/featuredetect.h"
-using namespace std;
+#include "include/surfdetector.h"
 using namespace cv;
+using namespace std;
+using namespace cv::xfeatures2d;
 int main(int argc, char *argv[])
 {
     string path;
     string path1;
     string path2;
-    Mat input; //Load as grayscale
+    Mat input; 
     Mat input2;
     try
     {
+
         if (argc <= 2)
         {
             path = "photos/picture.png";
@@ -26,8 +29,8 @@ int main(int argc, char *argv[])
             path = argv[1];
             path2 = argv[2];
         }
-        input = imread(path, 0);
-        input2 = imread(path2, 0);
+        input = imread(path, IMREAD_GRAYSCALE);
+        input2 = imread(path2, IMREAD_GRAYSCALE);
         if (input.empty() || input2.empty())
         {
             throw("image not found in the path");
@@ -38,41 +41,52 @@ int main(int argc, char *argv[])
         cerr << msg << '\n';
         return 0;
     }
+
     vector<Mat> finalimage;
     Mat output;
     Mat output2;
-    vector<KeyPoint> keypoints, keypoints2;
-    Mat descriptor, descriptor2;
+    vector<KeyPoint> keypoints, keypoints2,keypoints_Surf, keypoints2_Surf;
+    Mat descriptor, descriptor2, descriptor_Surf, descriptor2_Surf;
     vector<Mat> Group_of_images;
     vector<Mat> Group_of_images1;
 
     /*** preexisiting ***/
-    cv::Ptr<Feature2D> detector = SIFT::create();
-    // detector->detectAndCompute(input, noArray(), keypoints, descriptor);
-    // detector->detectAndCompute(input2, noArray(), keypoints2, descriptor2);
+    // cv::Ptr<Feature2D> Siftdetector = SIFT::create();
+    // Ptr<SURF> Surfdetector = SURF::create( minHessian );
+    // Siftdetector->detectAndCompute(input, noArray(), keypoints, descriptor);
+    // Siftdetector->detectAndCompute(input2, noArray(), keypoints2, descriptor2);
+    // Surfdetector->detect(input,keypoints2,noArray());
+
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::BRUTEFORCE);
-    std::vector<DMatch> matches;
+    std::vector<DMatch> matches_SIFT,matches_SURF;
 
     /** By implementing SIFT algorithm **/
-    FeatrueDetect ff;
-    tie(keypoints, descriptor) = ff.featuresdetect(input);
-    tie(keypoints2, descriptor2) = ff.featuresdetect(input2);
+    FeatrueDetect ff_sift;
+    tie(keypoints, descriptor) = ff_sift.featuresdetect(input);
+    tie(keypoints2, descriptor2) = ff_sift.featuresdetect(input2);
 
-    cout << descriptor.size() << endl;
-    cout << descriptor2.size() << endl;
+    /** By implementing SURF algorithm **/
+    SurfDetector ff_Surf;
+    tie(keypoints_Surf, descriptor_Surf) = ff_Surf.featuresdetect(input);
+    tie(keypoints2_Surf, descriptor2_Surf) = ff_Surf.featuresdetect(input2);
 
     /*
      * For Drawing Descriptor
      */
-    matcher->match(descriptor, descriptor2, matches);
-    Mat img_matches;
-    drawMatches(input, keypoints, input2, keypoints2, matches, img_matches);
+    matcher->match(descriptor, descriptor2, matches_SIFT);
+    Mat img_matches_Sift;
+    drawMatches(input, keypoints, input2, keypoints2, matches_SIFT, img_matches_Sift);
 
+    matcher->match(descriptor_Surf, descriptor2_Surf, matches_SURF);
+    Mat img_matches_Surf;
+    drawMatches(input, keypoints_Surf, input2, keypoints2_Surf, matches_SURF, img_matches_Surf);
     /*
      * For Drawing Keypoints only
      */
 
     // drawKeypoints(input, keypoints, output, Scalar_<double>::all(-1), DrawMatchesFlags::DEFAULT);
+
+    // drawKeypoints(input2, keypoints2, output2, Scalar_<double>::all(-1), DrawMatchesFlags::DEFAULT);
     // drawKeypoints(input2, keypoints2, output2, Scalar_<double>::all(-1), DrawMatchesFlags::DEFAULT);
 
     /*
@@ -88,9 +102,10 @@ int main(int argc, char *argv[])
         * For showing Descriptor
         */
 
-        namedWindow("window ", WINDOW_NORMAL);
-        imshow("window ", img_matches);
-
+        namedWindow("window SIFT", WINDOW_NORMAL);
+        imshow("window SIFT", img_matches_Sift);
+        namedWindow("window SURF", WINDOW_NORMAL);
+        imshow("window SURF", img_matches_Surf);
         /*
         * For showing Keypoints and orientation
         */
@@ -101,7 +116,7 @@ int main(int argc, char *argv[])
         int k = waitKey(0);
         if (k == 27)
         {
-            // imwrite("photos/output_descriptor.png", img_matches);
+            // imwrite("photos/output_descriptor_surf.png", img_matches_Surf);
             // imwrite("photos/output_orientation.png", output);
             // imwrite("photos/output_orientation1.png", output2);
             break;

@@ -45,7 +45,6 @@ Mat FeatrueDetect::create_descripter(vector<KeyPoint> keypoints_, vector<vector<
   vector<float> row_bin_list, col_bin_list, magnitude_list, orientation_bin_list;
   int window_width = 4;
   int scale_weighter = 3;
-  cout << " imageevec" << imagevec.size() << endl;
   for (int kv = 0; kv < int(keypoints_.size()); kv++)
   {
     row_bin_list.clear();

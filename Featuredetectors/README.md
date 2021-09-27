@@ -27,5 +27,13 @@ Keypoints on the supplied images using SIFT algorithm<br/>
 
 [Keypoints on the image 1](photos/output_1.png)
 
-Feature Descriptor output to match features <br/>
+SIFT Feature Descriptor output to match features <br/>
 [Descriptor output ](photos/output_descriptor.png)
+
+Keypoints on the supplied images using SURF algorithm<br/>
+[Keypoints on the image](photos/output_surf.png)
+
+[Keypoints on the image 1](photos/output_1_surf.png)
+
+SURF Feature Descriptor output to match features <br/>
+[Descriptor output ](photos/output_descriptor_surf.png)
