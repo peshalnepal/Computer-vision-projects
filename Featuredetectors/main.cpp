@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
         if (argc <= 2)
         {
-            path = "photos/picture1.png";
+            path = "photos/picture.png";
             path2 = "photos/picture2.png";
         }
         if (argc == 3)
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     std::vector<DMatch> matches_SIFT, matches_SURF, matches_orb;
 
     /**
-     * Implementation of ORB feature detector 
+     * Implementation of ORB feature detector
     */
 
     clock_t t1, t2;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
     //Time taken for running your code segment
 
-    Orbfeaturedetector ff_orb(100);
+    Orbfeaturedetector ff_orb(150);
     tie(keypoints_ORB, descriptor_ORB) = ff_orb.featuresdetect(input);
     tie(keypoints2_ORB, descriptor2_ORB) = ff_orb.featuresdetect(input2);
     t2 = clock();
