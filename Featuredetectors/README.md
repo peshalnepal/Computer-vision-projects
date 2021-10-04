@@ -18,25 +18,39 @@ In this project Feature Detection algorithm is applied to the image specially th
 
 ## Input & Output: <br/>
 original images<br/>
-[original image ](photos/picture.png)
+[original image 1](photos/picture.png)
 
-[original image 1 ](photos/picture2.png)
+[original image 2 ](photos/picture2.png)
+
+[original image 3 ](photos/picture2.png)
 
 Keypoints on the supplied images using SIFT algorithm<br/>
-[Keypoints on the image](photos/output_.png)
+[Keypoints on the image 1](photos/output_.png)
 
-[Keypoints on the image 1](photos/output_1.png)
+[Keypoints on the image 2](photos/output_1.png)
 
 SIFT Feature Descriptor output to match features <br/>
 [Descriptor output ](photos/output_descriptor.png)
 
 Keypoints on the supplied images using SURF algorithm<br/>
-[Keypoints on the image](photos/output_surf.png)
+[Keypoints on the image 1](photos/output_surf.png)
 
-[Keypoints on the image 1](photos/output_1_surf.png)
+[Keypoints on the image 2](photos/output_1_surf.png)
 
 SURF Feature Descriptor output to match features <br/>
 [Descriptor output ](photos/output_descriptor_surf.png)
+
+Keypoints on the supplied images using ORB algorithm<br/>
+[Keypoints on the image 3](photos/output_ORB.png)
+
+[Keypoints on the image 2](photos/output1_ORB.png)
+
+Keypoints orientation on the supplied images using ORB algorithm<br/>
+[Keypoints orientation ](photos/output1_orientation_ORB.png)
+
+
+BRIEF Feature Descriptor output from ORB algorithm to match features <br/>
+[Descriptor output ](photos/output_descriptor_orb.png)
 
 ## FEATURE DETECTORS
 
@@ -201,10 +215,11 @@ SURF feaature detector stands for Speeded Up Robust Features. Its' main feature 
     `$
 
     where 0.9 is Bay's suggestion which as a result might get result close to that of Gaussian second order derivative. 
+
     ![Box filters](photos/for_documentation/boxfilter.png)
 
   - ### Scale-space representation:
-    In SIFT operation, Image size was reduce with increase in scale. Images were blurred more aggresively as we go higher up in scale space pyramid. But in case of SURF instead of decreasing size of an image, Size of filter is being increased. Box filter of size 9 x 9 , 15 x 15 , 21 x 21 ,27 x 27 ... is used as we we go higher up in pyramid. The difference between scale changes from 6 to 12 12 to 24 as we change the octave of the images. To predict sigma value for appropriate filter 
+    In SIFT operation, Image size is reduce with increase in scale. Images are blurred more aggresively as we go higher up in scale space pyramid. But in case of SURF instead of decreasing size of an image, Size of filter is being increased. Box filter of size 9 x 9 , 15 x 15 , 21 x 21 ,27 x 27 ... is used as we we go higher up in pyramid. The difference between scale changes from 6 to 12 12 to 24 as we change the octave of the images. To predict sigma value for appropriate filter 
 
     $`\begin{aligned}\\
     &s={\text{current filter size}}\times \left({\frac {\text{base filter scale}}{\text{base filter size}}}\right)\\
@@ -217,7 +232,7 @@ SURF feaature detector stands for Speeded Up Robust Features. Its' main feature 
 - ### **Feature Description:**
   Feature description usually use two steps. First step is to find the orientation of the image and second steps include finding the descriptor.
   - ### Orientation assignment:
-    SURF uses Haar wavelet response to determine orientation. Circle of Radius **6s** is taken around the keypoints. Horizontal and vertical filter of size **4s** was used across the matrix which lies inside the circle of radius **6s**. These two filters represent the wavelet transform across the row and column of the image. The output of these filter gives horizontal and vertical wavelet response. To decrease computational time, for a larger value of **s**, Integral images are used which only use six operations to compute the response in the x or y direction at any scale. Each output is weighted by Gaussian value with a sigma of **2.5s**.
+    SURF uses Haar wavelet response to determine orientation. Circle of Radius **6s** is taken around the keypoints. Horizontal and vertical filter of size **4s** is used across the matrix which lies inside the circle of radius **6s**. These two filters represent the wavelet transform across the row and column of the image. The output of these filter gives horizontal and vertical wavelet response. To decrease computational time, for a larger value of **s**, Integral images are used which only use six operations to compute the response in the x or y direction at any scale. Each output is weighted by Gaussian value with a sigma of **2.5s**.
 
     ![Horizontal and vertical wavelets](photos/for_documentation/haarwavelets.png)
 
@@ -227,3 +242,110 @@ SURF feaature detector stands for Speeded Up Robust Features. Its' main feature 
 
   - ### Descriptor Components:
     To calculate the descriptor, first we take square region around the keypoint of size **20s** wheres is s is scale of keypoint in the same orientation as that of keypoint. Each area is divided into sub-areas, each of size **5s\*5s** as a result the **20s** window is divided into 4x4  smaller windows and for each subarea, Horizontal and vertical wavelets response are calculated i.e. dx and dy. The obtained response of wavelets in the sub-areas are added resulting in $`\sum{dx}`$ and $`\sum{dy}`$ . Not only that the absolute values are summed to obtain $`\sum{|dx|}`$ & $`\sum{|dy|}`$ .For Each sub-areas, there will be 4 vectors $`V=(\sum{dx},\sum{|dx|},\sum{dy},\sum{|dy|})`$ . Combining all those vector from all the sub areas, there will be a total of 64 vectors for each keypoint as a descriptor. 
+
+## ORB Feature Detector:
+ORB stands for Oriented FAST and Rotated BRIEF . As name suggest, ORB is built in FAST feature detector and Advance BRIEF descriptor. ORB is more faster than SURF feature detector with result as good as SIFT feafture detector.  As ORB is faster with output that is reliable as compared to other feature detector and si faster in nature they can be used in real time activity like facial recognition, object tracking e.t.c.
+### **Fast(Features from Accelerated and Segments Test) to detect Keypoints**
+
+Steps that are taken in Fast feature detector are:
+
+  ![Features from Accelerated and Segments Test](photos/for_documentation/FAST.png)
+
+  - As Fast is not scale invariant, Image are scale to half the width and height in the image pyramid so that scale of image won't be the issue.
+  - For each scaled images, select pixel **p** having Inensity value of **Ip** and 
+  - let the threshold value be **t**
+  - Consider a circle of 16 pixels around the pixel under test. (This is a Bresenham circle of radius 3.) 
+  - The pixels at pixels values at  I1, I5, I9, I13 are compared with the centre pixel and if 3 out of 4  neighboring pixels is darker than **(Ip-t)** or brighter than **(Ip+t)** , All other remaining 16 pixels are compared.
+  - If 12 contiguous pixels out of 16 are brighter or darker then the centre pixels is condider as keypoint. 
+  - To identify noise and remove them **Harris Corner detection** is used.
+    
+    $`\large
+    \begin{aligned}
+    &M={\underset {(x,y)\in W}{\sum }}{\begin{bmatrix}I_{x}^{2}&I_{x}I_{y}\\I_{x}I_{y}&I_{y}^{2}\end{bmatrix}}={\begin{bmatrix}{\underset {(x,y)\in W}{\sum }}I_{x}^{2}&{\underset {(x,y)\in W}{\sum }}I_{x}I_{y}\\{\underset {(x,y)\in W}{\sum }}I_{x}I_{y}&{\underset {(x,y)\in W}{\sum }}I_{y}^{2}\end{bmatrix}}\\
+    &\mathrm {tr} (M)={\underset {(x,y)\in W}{\sum }}I_{x}^{2}+{\underset {(x,y)\in W}{\sum }}I_{y}^{2}\\
+    &R=\det(M)-k\operatorname {tr} (M)^{2}
+    \end{aligned}`$
+
+    where k is an empirically determined constant k = [0.04,0.06]
+
+  - We sort keypoints on value of **R** in decending order and only take top **n** values
+  - Repeat the procedure for all the pixels in the scaled images.
+
+### **Identifying orientation of Keypoints**
+Fast does not allow to calulate the orientation of the pixels so to calculate orientation intensity centroid is used. The intensity centroid assumes that a corner’s intensity is offset from its center, and this vector may be used to impute an orientation. Following are steps that are taken into consideration to calculate the orientation of an image. 
+  - At first window of size 7 is taken around the obtained keypoints.
+  - For the given patch moment of intensity is calculated by 
+    
+    $\large m_{p,q}={\underset {x,y}{\sum }}x^p y^q I(x,y)`$
+
+  - To calculate centroid moment along x and y is calculated and total intensity value is calculated in both direction and cenroid is obtained as 
+    
+    $`\large C=(\frac{m_{10}}{m_{00}} , \frac{m_{01}}{m_{00}})`$
+
+  - Orientation can be calculated from centre pixel to the centriod by 
+    
+    $`\large \theta=\arctan(\frac{m_{01}}{m_{10}})`$
+
+### **BRIEF(Binary robust independent elementary feature)**
+BRIEF feature descriptor describe surrounding of keypoints with Binary feature vectors. Each keypoint is describe by sequence of 1 and 0 which are called binary vectors and vector length varies from 128-512 bits string. Steps that are to be taken into consideration are
+
+  - As BRIEF descriptor are vunerable to noise so images are blurred by Gaussian filter.
+  - Window of size **S** is taken around the keypoints.
+  - Random pixels pairs are picked around the keypoints. Pixels value on those pairs are compared with one another
+  
+    $`\tau(p;x,y)=\left\{\begin{array}{cc} 
+    1 : p(x)< p(y)\\
+    0 : p(x)>= p(y)
+    \end{array}\right\}`$
+
+    If pixels **p(y)** is greater than **p(x)** then bit value is set to 1 out of 128 bits otherwise 0 in the respective bit.
+
+  - To fill 128 bits, 128 pairs of pixels are needed and to select those random pairs of vectors  one of the following given methods is used
+  
+    ![Different approach to choose test locations](photos/for_documentation/Random_pixels.png)
+
+    - ***Uniform(G I):*** Both x and y pixels in the random pair is drawn from a Unifrom distribution or spread of S/2 around keypoint.
+    - ***Gaussian(G II):*** Both x and y pixels in the random pair is drawn from a Gaussian distribution or spread of 0.04 * S² around keypoint. To calulate Gaussian distribution Box muller methods is used. 
+    - ***Gaussian(G III):*** The first pixel(x) in the random pair is drawn from a Gaussian distribution centered around the keypoint with a stranded deviation or spread of **0.04 * S²**. The second pixel(y) in the random pair is drawn from a Gaussian distribution centered around the first pixel(x) with a standard deviation or spread of **0.01 * S²**.
+    - ***Coarse Polar Grid(G IV):*** Both x and y pixels in the random pair is sampled from discrete locations of a coarse polar grid introducing a spatial quantization.
+    - ***Coarse Polar Grid(G V):*** The first pixel(x) in random pair is at (0, 0) and the second pixel(y) in the random pair is drawn from discrete locations of a coarse polar grid.
+  
+  - For this project pixels are selected in uniform order around the Keypoints.
+  - BRIEF is not rotation invariant so if image is rotated slightly descriptor breaks down . To over come that **Steer BRIEF** is used where each pixels pairs are rotated by orientation of the keypoint. Pixel value at new rotated location is compared which compensate error due to rotation
+    
+      $`\large
+      \begin{aligned}
+      &R_{\theta}=\left(\begin{array}{cc} 
+      \cos & -\sin\\
+      \sin & \cos
+      \end{array}\right)\\
+      \\
+      &S=\left(\begin{array}{cc} 
+      x_1 & ...\\
+      y_1 & ...
+      \end{array}\right)\\
+      \\
+      &S_{\theta}=R_{\theta}S\\
+      \\
+      &g_{n}(p,\theta)=f_n (p)|(x_i,y_i) \in S_{\theta}
+      \end{aligned}`$
+
+
+
+## To Read More about these topic 
+- [About feature detector](https://medium.com/@deepanshut041/introduction-to-sift-scale-invariant-feature-transform-65d7f3a72d40)
+- For SIFT feature detector
+  - [Wikipedia](https://en.wikipedia.org/wiki/Scale-invariant_feature_transform)
+  - [towardscience](https://towardsdatascience.com/sift-scale-invariant-feature-transform-c7233dc60f37)
+  - [scholarpedia](http://www.scholarpedia.org/article/Scale_Invariant_Feature_Transform)
+- [Paper on SIFT feature detector](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf)
+- For SURF feature detector
+  - [Wikipedia](https://en.wikipedia.org/wiki/Speeded_up_robust_features)
+  - [wasignton.edu](https://courses.cs.washington.edu/courses/cse576/13sp/projects/project1/artifacts/woodrc/index.htm)
+- [Paper on SURF feature detector](https://people.ee.ethz.ch/~surf/eccv06.pdf)
+- For FAST feature detector
+  - [Wikipedia](https://en.wikipedia.org/wiki/Features_from_accelerated_segment_test)
+- For ORB feature descriptor
+  - [research gate](https://www.researchgate.net/publication/221111151_ORB_an_efficient_alternative_to_SIFT_or_SURF)
+- [Paper on Brief](https://www.cs.ubc.ca/~lowe/525/papers/calonder_eccv10.pdf)
+- [Paper on ORB feature detector](http://www.gwylab.com/download/ORB_2012.pdf)

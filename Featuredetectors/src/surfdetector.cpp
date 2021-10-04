@@ -331,7 +331,6 @@ vector<KeyPoint> SurfDetector::calculateorientation(Mat image, vector<KeyPoint> 
     char name_[100];
     float pi = 2 * acos(0);
     copyMakeBorder(image, image, BorderSize, BorderSize, BorderSize, BorderSize, BORDER_REPLICATE, Scalar(0));
-    float angle = 60 * pi / 180;
     for (int i = 0; i < keypoints.size(); i++)
     {
         KeyPoint keypoint = keypoints.at(i);

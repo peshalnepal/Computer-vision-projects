@@ -322,7 +322,7 @@ vector<KeyPoint> FeatrueDetect::calculateorientation(vector<KeyPoint> keypoints,
               angle = 360 + angle;
             }
             weight = exp(weight_factor * (p * p + q * q));
-            histogramcontainer.at<float>(0, (int)(round(angle / 10))) = histogramcontainer.at<float>(0, (int)(round(angle / 10))) + weight * Gvalue;
+            histogramcontainer.at<float>(0, (int)(round(angle / 10))) += weight * Gvalue;
           }
         }
       }
