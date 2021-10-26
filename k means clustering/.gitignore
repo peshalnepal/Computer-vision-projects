@@ -1,0 +1,10 @@
+# ignore notebook file
+.ipynb
+
+# ignore folder
+.ipynb_checkpoints/  
+
+# vscode files
+.vscode
+
+__pycache__
