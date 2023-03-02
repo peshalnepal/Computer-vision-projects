@@ -1,0 +1,4 @@
+
+# ignore folder
+.ipynb_checkpoints/  
+.vscode

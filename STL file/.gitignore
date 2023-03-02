@@ -1,0 +1,22 @@
+# Cache file
+CMakeCache.txt
+
+# cmake_install
+*.cmake
+
+#makefile
+Makefile
+
+# cmakefiles
+CMakeFiles/
+
+#executable file
+sortimages
+main
+ 
+# main files
+*.o
+*.exe
+
+.vscode
+build

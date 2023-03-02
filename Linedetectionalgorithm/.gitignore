@@ -1,0 +1,23 @@
+# Cache file
+CMakeCache.txt
+
+# cmake_install
+*.cmake
+
+#makefile
+Makefile
+
+# cmakefiles
+CMakeFiles/
+
+#executable file
+linedetect
+main
+
+#configfile
+linedetectConfig.h
+linedetectConfig.h.tmp
+ 
+# main files
+*.o
+*.exe
